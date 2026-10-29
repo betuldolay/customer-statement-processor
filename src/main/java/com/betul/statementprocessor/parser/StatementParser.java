@@ -6,5 +6,7 @@ import java.io.InputStream;
 import java.util.List;
 
 public interface StatementParser {
+    boolean supports(String fileName);
+
     List<StatementRecord> parse(InputStream input);
 }

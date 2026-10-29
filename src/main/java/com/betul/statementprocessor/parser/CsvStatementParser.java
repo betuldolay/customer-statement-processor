@@ -13,6 +13,7 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Locale;
 
 @Component
 public class CsvStatementParser implements StatementParser {
@@ -25,6 +26,11 @@ public class CsvStatementParser implements StatementParser {
             .setSkipHeaderRecord(true)
             .setTrim(true)
             .get();
+
+    @Override
+    public boolean supports(String fileName) {
+        return fileName.toLowerCase(Locale.ROOT).endsWith(".csv");
+    }
 
     @Override
     public List<StatementRecord> parse(InputStream input) {

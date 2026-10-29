@@ -18,9 +18,15 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Component
 public class XmlStatementParser implements StatementParser {
+
+    @Override
+    public boolean supports(String fileName) {
+        return fileName.toLowerCase(Locale.ROOT).endsWith(".xml");
+    }
 
     @Override
     public List<StatementRecord> parse(InputStream input) {
