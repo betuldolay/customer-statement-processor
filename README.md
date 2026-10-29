@@ -17,6 +17,7 @@ The report lists the reference, description and failure reason(s) of each failed
 - Apache Commons CSV
 - Jackson XML (Jackson 3)
 - JUnit 5, AssertJ, MockMvc
+- springdoc-openapi (Swagger UI)
 
 ## Running the application
 
@@ -34,7 +35,10 @@ Run the tests:
 
 ## API
 
-### `POST /api/statements/validate`
+### Try it in the browser
+
+Start the application and open **http://localhost:8080/swagger-ui.html**.
+Use *Try it out* to upload a file and see the validation report.
 
 Upload a `.csv` or `.xml` file as `multipart/form-data` with the field name `file`.
 The response is always JSON.
