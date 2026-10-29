@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CsvStatementParserTest {
 
@@ -39,5 +40,18 @@ class CsvStatementParserTest {
         assertThat(record.startBalance()).isEqualByComparingTo("23.19");
         assertThat(record.mutation()).isEqualByComparingTo("28.49");
         assertThat(record.endBalance()).isEqualByComparingTo("51.68");
+    }
+
+    @Test
+    void failsWithParseExceptionOnMalformedCsv() {
+        String csv = """
+                Reference,Account Number,Description,Start Balance,Mutation,End Balance
+                1,NL56RABO0149876948,"Unclosed quote,10.00,+5.00,15.00
+                """;
+        InputStream input = new ByteArrayInputStream(csv.getBytes(CsvStatementParser.CSV_CHARSET));
+
+        assertThatThrownBy(() -> parser.parse(input))
+                .isInstanceOf(StatementParseException.class)
+                .hasMessageContaining("Could not read CSV file");
     }
 }

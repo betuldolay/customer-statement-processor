@@ -1,6 +1,7 @@
 package com.betul.statementprocessor.validation;
 
 import com.betul.statementprocessor.model.StatementRecord;
+import com.betul.statementprocessor.parser.CsvStatementParser;
 import com.betul.statementprocessor.parser.XmlStatementParser;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import static com.betul.statementprocessor.validation.FailureReason.DUPLICATE_REFERENCE;
 import static com.betul.statementprocessor.validation.FailureReason.INCORRECT_END_BALANCE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.tuple;
 
 class StatementValidatorTest {
 
@@ -74,6 +76,20 @@ class StatementValidatorTest {
             assertThat(validator.validate(records))
                     .extracting(FailedRecord::reference)
                     .containsExactlyInAnyOrder  (122671L, 124889L);
+        }
+    }
+
+    @Test
+    void findsTheDuplicateReferencesInSampleCsv() throws IOException {
+        try (InputStream input = getClass().getResourceAsStream("/records.csv")) {
+            List<StatementRecord> records = new CsvStatementParser().parse(input);
+
+            assertThat(validator.validate(records))
+                    .extracting(FailedRecord::reference, FailedRecord::reasons)
+                    .containsExactly(
+                            tuple(112806L, List.of(DUPLICATE_REFERENCE)),
+                            tuple(112806L, List.of(DUPLICATE_REFERENCE)),
+                            tuple(112806L, List.of(DUPLICATE_REFERENCE)));
         }
     }
 

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -37,7 +38,7 @@ public class CsvStatementParser implements StatementParser {
         try (Reader reader = new InputStreamReader(input, CSV_CHARSET);
              CSVParser parser = FORMAT.parse(reader)) {
             return parser.stream().map(this::toRecord).toList();
-        } catch (IOException e) {
+        } catch (IOException | UncheckedIOException e) {
             throw new StatementParseException("Could not read CSV file", e);
         }
     }

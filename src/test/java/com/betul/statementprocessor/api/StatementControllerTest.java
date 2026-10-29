@@ -47,7 +47,8 @@ class StatementControllerTest {
     void validatesCsvFile() throws Exception {
         mockMvc.perform(multipart("/api/statements/validate").file(sampleFile("records.csv")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalRecords").value(10));
+                .andExpect(jsonPath("$.totalRecords").value(10))
+                .andExpect(jsonPath("$.failedRecords.length()").value(3));
     }
 
     @Test
@@ -62,6 +63,16 @@ class StatementControllerTest {
     @Test
     void rejectsMalformedXml() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "broken.xml", "application/xml", "<records><record".getBytes());
+
+        mockMvc.perform(multipart("/api/statements/validate").file(file))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void rejectsMalformedCsv() throws Exception {
+        String csv = "Reference,Account Number,Description,Start Balance,Mutation,End Balance\n"
+                + "1,NL56RABO0149876948,\"Unclosed quote,10.00,+5.00,15.00\n";
+        MockMultipartFile file = new MockMultipartFile("file", "broken.csv", "text/csv", csv.getBytes());
 
         mockMvc.perform(multipart("/api/statements/validate").file(file))
                 .andExpect(status().isBadRequest());
