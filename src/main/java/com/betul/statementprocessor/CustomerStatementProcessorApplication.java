@@ -1,4 +1,4 @@
-package com.betul.customer_statement_processor;
+package com.betul.statementprocessor;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
