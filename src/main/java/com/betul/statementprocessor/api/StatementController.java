@@ -22,7 +22,9 @@ public class StatementController {
         this.processingService = processingService;
     }
 
-    @PostMapping(value = "/validate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/validate",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public ValidationReport validate(@RequestParam("file") MultipartFile file) throws IOException {
         try (InputStream input = file.getInputStream()) {
             return processingService.process(file.getOriginalFilename(), input);

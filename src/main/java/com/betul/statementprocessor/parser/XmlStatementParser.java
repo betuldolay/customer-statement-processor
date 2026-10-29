@@ -2,26 +2,22 @@ package com.betul.statementprocessor.parser;
 
 import com.betul.statementprocessor.model.StatementRecord;
 import org.springframework.stereotype.Component;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import tools.jackson.core.JacksonException;
+import tools.jackson.dataformat.xml.XmlFactory;
+import tools.jackson.dataformat.xml.XmlMapper;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
+import javax.xml.stream.XMLInputFactory;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 @Component
 public class XmlStatementParser implements StatementParser {
+
+    private final XmlMapper xmlMapper = createSecureMapper();
 
     @Override
     public boolean supports(String fileName) {
@@ -31,48 +27,57 @@ public class XmlStatementParser implements StatementParser {
     @Override
     public List<StatementRecord> parse(InputStream input) {
         try {
-            Document document = createSecureBuilder().parse(input);
-            NodeList nodes = document.getElementsByTagName("record");
-
-            List<StatementRecord> records = new ArrayList<>();
-            for (int i = 0; i < nodes.getLength(); i++) {
-                records.add(toRecord((Element) nodes.item(i)));
+            XmlRecords document = xmlMapper.readValue(input, XmlRecords.class);
+            if (document == null || document.records() == null) {
+                return List.of();
             }
-            return List.copyOf(records);
-        } catch (ParserConfigurationException | SAXException | IOException e) {
+            return document.records().stream()
+                    .map(XmlStatementParser::toRecord)
+                    .toList();
+        } catch (JacksonException e) {
             throw new StatementParseException("Could not read XML file", e);
         }
     }
 
-    // Protects against XXE (XML External Entity) attacks
-    private DocumentBuilder createSecureBuilder() throws ParserConfigurationException {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        factory.setXIncludeAware(false);
-        factory.setExpandEntityReferences(false);
-
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        builder.setErrorHandler(new DefaultHandler()); // throw errors, don't print them
-        return builder;
-    }
-
-    private StatementRecord toRecord(Element item) {
+    private static StatementRecord toRecord(XmlRecord xml) {
         return new StatementRecord(
-                Long.parseLong(item.getAttribute("reference")),
-                text(item, "accountNumber"),
-                text(item, "description"),
-                new BigDecimal(text(item, "startBalance")),
-                new BigDecimal(text(item, "mutation")),
-                new BigDecimal(text(item, "endBalance"))
+                Long.parseLong(required(xml.reference(), "reference")),
+                required(xml.accountNumber(), "accountNumber"),
+                required(xml.description(), "description"),
+                new BigDecimal(required(xml.startBalance(), "startBalance")),
+                new BigDecimal(required(xml.mutation(), "mutation")),
+                new BigDecimal(required(xml.endBalance(), "endBalance"))
         );
     }
 
-    private String text(Element parent, String tagName) {
-        Node node = parent.getElementsByTagName(tagName).item(0);
-        if (node == null) {
-            throw new StatementParseException("Missing <" + tagName + "> in record");
+    private static String required(String value, String fieldName) {
+        if (value == null) {
+            throw new StatementParseException("Missing <" + fieldName + "> in record");
         }
-        return node.getTextContent().trim();
+        return value.trim();
+    }
+
+    // Protects against XXE: no DTDs, no external entities
+    private static XmlMapper createSecureMapper() {
+        XMLInputFactory inputFactory = XMLInputFactory.newFactory();
+        inputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        inputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        return XmlMapper.builder(XmlFactory.builder().xmlInputFactory(inputFactory).build()).build();
+    }
+
+    // XML shape of the file, kept private to this parser
+    record XmlRecords(
+            @JacksonXmlElementWrapper(useWrapping = false)
+            @JacksonXmlProperty(localName = "record")
+            List<XmlRecord> records) {
+    }
+
+    record XmlRecord(
+            @JacksonXmlProperty(isAttribute = true) String reference,
+            String accountNumber,
+            String description,
+            String startBalance,
+            String mutation,
+            String endBalance) {
     }
 }
