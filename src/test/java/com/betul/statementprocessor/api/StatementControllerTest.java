@@ -63,6 +63,12 @@ class StatementControllerTest {
     }
 
     @Test
+    void rejectsRequestWithoutFile() throws Exception {
+        mockMvc.perform(multipart("/api/statements/validate"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void rejectsMalformedXml() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "broken.xml", "application/xml", "<records><record".getBytes());
 
