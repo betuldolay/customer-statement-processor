@@ -38,7 +38,7 @@ public class StatementProcessingService {
             return parser.parse(content);
         } catch (IllegalArgumentException e) {
             // e.g. a non-numeric balance or a missing CSV column
-            throw new StatementParseException("Invalid record data in '" + fileName + "'", e);
+            throw new StatementParseException("Invalid record data in '" + fileName + "': " + e.getMessage(), e);
         }
     }
 }

@@ -74,7 +74,7 @@ class StatementValidatorTest {
 
             assertThat(validator.validate(records))
                     .extracting(FailedRecord::reference)
-                    .containsExactlyInAnyOrder  (122671L, 124889L);
+                    .containsExactlyInAnyOrder(122671L, 124889L);
         }
     }
 

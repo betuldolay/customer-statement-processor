@@ -102,6 +102,9 @@ model/        StatementRecord, the format-independent domain model
   parser by file extension. Supporting a new format means adding one class (Open/Closed principle).
 - **CSV encoding.** The delivered CSV files are Windows-1252 encoded (e.g. `Theuß`),
   so the CSV parser reads them explicitly as such. XML files declare their own encoding.
+  If a client sends a UTF-8 CSV instead, special characters are misread without any error
+  (`ß` becomes `ÃŸ`). The validation result is still correct, because it only depends on
+  references and amounts, but descriptions in the report would be garbled. In production
+  I would agree on the encoding with the client, or detect it, for example from a byte order mark.
 - **XML is mapped declaratively with Jackson.** The XML structure is described by small
   records that are internal to the parser; the rest of the application only sees `StatementRecord`.
-- **Tolerant reader.** Unknown XML elements are ignored, so new fields in future

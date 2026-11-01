@@ -54,4 +54,69 @@ class CsvStatementParserTest {
                 .isInstanceOf(StatementParseException.class)
                 .hasMessageContaining("Could not read CSV file");
     }
+
+    @Test
+    void returnsEmptyListWhenFileHasOnlyHeader() {
+        String csv = "Reference,Account Number,Description,Start Balance,Mutation,End Balance\n";
+
+        assertThat(parser.parse(toStream(csv))).isEmpty();
+    }
+
+    @Test
+    void returnsEmptyListWhenFileIsEmpty() {
+        assertThat(parser.parse(toStream(""))).isEmpty();
+    }
+
+    @Test
+    void trimsWhitespaceAroundValues() {
+        String csv = """
+                Reference,Account Number,Description,Start Balance,Mutation,End Balance
+                 1 , NL56RABO0149876948 , Flowers , 10.00 , +5.00 , 15.00
+                """;
+
+        StatementRecord record = parser.parse(toStream(csv)).getFirst();
+
+        assertThat(record.reference()).isEqualTo(1L);
+        assertThat(record.accountNumber()).isEqualTo("NL56RABO0149876948");
+        assertThat(record.description()).isEqualTo("Flowers");
+        assertThat(record.mutation()).isEqualByComparingTo("5.00");
+    }
+
+    @Test
+    void readsQuotedDescriptionContainingComma() {
+        String csv = """
+                Reference,Account Number,Description,Start Balance,Mutation,End Balance
+                1,NL56RABO0149876948,"Flowers, candy and cake",10.00,+5.00,15.00
+                """;
+
+        assertThat(parser.parse(toStream(csv)).getFirst().description())
+                .isEqualTo("Flowers, candy and cake");
+    }
+
+    @Test
+    void failsWhenColumnIsMissing() {
+        String csv = """
+                Reference,Account Number,Description,Start Balance,Mutation
+                1,NL56RABO0149876948,Flowers,10.00,+5.00
+                """;
+
+        assertThatThrownBy(() -> parser.parse(toStream(csv)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("End Balance");
+    }
+
+    @Test
+    void failsWhenBalanceIsNotANumber() {
+        String csv = """
+                Reference,Account Number,Description,Start Balance,Mutation,End Balance
+                1,NL56RABO0149876948,Flowers,abc,+5.00,15.00
+                """;
+
+        assertThatThrownBy(() -> parser.parse(toStream(csv)))
+                .isInstanceOf(NumberFormatException.class);
+    }
+
+    private InputStream toStream(String csv) {
+        return new ByteArrayInputStream(csv.getBytes(CsvStatementParser.CSV_CHARSET));
+    }
 }

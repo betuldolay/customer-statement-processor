@@ -48,7 +48,9 @@ class StatementControllerTest {
         mockMvc.perform(multipart("/api/statements/validate").file(sampleFile("records.csv")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalRecords").value(10))
-                .andExpect(jsonPath("$.failedRecords.length()").value(3));
+                .andExpect(jsonPath("$.failedRecords.length()").value(3))
+                .andExpect(jsonPath("$.failedRecords[0].reference").value(112806))
+                .andExpect(jsonPath("$.failedRecords[0].reasons[0]").value("DUPLICATE_REFERENCE"));
     }
 
     @Test
@@ -76,6 +78,37 @@ class StatementControllerTest {
 
         mockMvc.perform(multipart("/api/statements/validate").file(file))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void rejectsXmlWithInvalidBalance() throws Exception {
+        String xml = """
+                <records>
+                  <record reference="1">
+                    <accountNumber>NL56RABO0149876948</accountNumber>
+                    <description>Flowers</description>
+                    <startBalance>abc</startBalance>
+                    <mutation>+5.00</mutation>
+                    <endBalance>15.00</endBalance>
+                  </record>
+                </records>
+                """;
+        MockMultipartFile file = new MockMultipartFile("file", "invalid.xml", "application/xml", xml.getBytes());
+
+        mockMvc.perform(multipart("/api/statements/validate").file(file))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("Invalid record data in 'invalid.xml'")));
+    }
+
+    @Test
+    void rejectsCsvWithInvalidBalance() throws Exception {
+        String csv = "Reference,Account Number,Description,Start Balance,Mutation,End Balance\n"
+                + "1,NL56RABO0149876948,Flowers,abc,+5.00,15.00\n";
+        MockMultipartFile file = new MockMultipartFile("file", "invalid.csv", "text/csv", csv.getBytes());
+
+        mockMvc.perform(multipart("/api/statements/validate").file(file))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("Invalid record data in 'invalid.csv'")));
     }
 
     private MockMultipartFile sampleFile(String name) throws IOException {

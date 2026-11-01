@@ -73,10 +73,6 @@ class XmlStatementParserTest {
                 .hasMessageContaining("accountNumber");
     }
 
-    private InputStream toStream(String xml) {
-        return new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
-    }
-
     @Test
     void returnsEmptyListWhenFileHasNoRecords() {
         assertThat(parser.parse(toStream("<records/>"))).isEmpty();
@@ -152,6 +148,10 @@ class XmlStatementParserTest {
         assertThatThrownBy(() -> parser.parse(toStream(xml)))
                 .isInstanceOf(StatementParseException.class)
                 .hasMessageContaining("reference");
+    }
+
+    private InputStream toStream(String xml) {
+        return new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
     }
 
 }
