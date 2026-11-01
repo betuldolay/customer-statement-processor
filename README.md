@@ -21,7 +21,7 @@ The report lists the reference, description and failure reason(s) of each failed
 
 ## Running the application
 
-No Maven installation needed, the Maven Wrapper is included:
+Requires JDK 25. No Maven installation needed, the Maven Wrapper is included:
 
 ```bash
 ./mvnw spring-boot:run
@@ -56,6 +56,11 @@ curl -F "file=@src/test/resources/records.xml" http://localhost:8080/api/stateme
     {
       "reference": 122671,
       "description": "Flowers from Peter Dekker",
+      "reasons": ["INCORRECT_END_BALANCE"]
+    },
+    {
+      "reference": 124889,
+      "description": "Subscription from Jan Bakker",
       "reasons": ["INCORRECT_END_BALANCE"]
     }
   ]
@@ -108,3 +113,19 @@ model/        StatementRecord, the format-independent domain model
   I would agree on the encoding with the client, or detect it, for example from a byte order mark.
 - **XML is mapped declaratively with Jackson.** The XML structure is described by small
   records that are internal to the parser; the rest of the application only sees `StatementRecord`.
+
+### Configuration
+- **Upload size limit of 10 MB.** Spring Boot accepts uploads of only 1 MB by default,
+  which is too small for a realistic monthly statement file. The limit is set explicitly in
+  `application.properties`, so it is a visible decision instead of a hidden default.
+  Larger uploads are rejected.
+
+## Limitations and next steps
+- **Files are processed in memory.** All records are parsed into a list before validation.
+  This is fine within the 10 MB upload limit; for much larger files I would stream the
+  records and only keep the references in memory for the duplicate check.
+- **The CSV encoding is assumed**, not detected (see *CSV encoding* above).
+- **No authentication.** In production the endpoint would sit behind the bank's
+  authentication and only be reachable by authorised clients.
+- **Processing is synchronous.** For large files or high volumes, an asynchronous flow
+  (upload, then fetch the report later) would scale better.
