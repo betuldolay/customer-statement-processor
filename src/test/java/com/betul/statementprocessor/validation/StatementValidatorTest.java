@@ -13,7 +13,6 @@ import java.util.List;
 import static com.betul.statementprocessor.validation.FailureReason.DUPLICATE_REFERENCE;
 import static com.betul.statementprocessor.validation.FailureReason.INCORRECT_END_BALANCE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.tuple;
 
 class StatementValidatorTest {
 
@@ -85,11 +84,10 @@ class StatementValidatorTest {
             List<StatementRecord> records = new CsvStatementParser().parse(input);
 
             assertThat(validator.validate(records))
-                    .extracting(FailedRecord::reference, FailedRecord::reasons)
                     .containsExactly(
-                            tuple(112806L, List.of(DUPLICATE_REFERENCE)),
-                            tuple(112806L, List.of(DUPLICATE_REFERENCE)),
-                            tuple(112806L, List.of(DUPLICATE_REFERENCE)));
+                            new FailedRecord(112806L, "Flowers for Willem Dekker", List.of(DUPLICATE_REFERENCE)),
+                            new FailedRecord(112806L, "Subscription from Jan Bakker", List.of(DUPLICATE_REFERENCE)),
+                            new FailedRecord(112806L, "Candy for Vincent Bakker", List.of(DUPLICATE_REFERENCE)));
         }
     }
 
