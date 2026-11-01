@@ -115,6 +115,9 @@ model/        StatementRecord, the format-independent domain model
 - **XML is mapped declaratively with Jackson.** The XML structure is described by small
   records that are internal to the parser; the rest of the application only sees `StatementRecord`.
 
+- **Protection against XXE attacks.** DTDs and external entities are disabled in the
+  XML parser, so an uploaded file cannot make the server read local files or URLs.
+
 ### Configuration
 - **Upload size limit of 10 MB.** Spring Boot accepts uploads of only 1 MB by default,
   which is too small for a realistic monthly statement file. The limit is set explicitly in
