@@ -105,12 +105,13 @@ model/        StatementRecord, the format-independent domain model
 ### Parsing
 - **One `StatementParser` interface, one implementation per format.** The service picks the
   parser by file extension. Supporting a new format means adding one class (Open/Closed principle).
-- **CSV encoding.** The delivered CSV files are Windows-1252 encoded (e.g. `Theuß`),
-  so the CSV parser reads them explicitly as such. XML files declare their own encoding.
+- **File encoding.** The delivered CSV files are Windows-1252 encoded (e.g. `Daniël`),
+  so the CSV parser reads them explicitly as such. XML files are read as UTF-8, the XML default,
+  unless specified otherwise.
   If a client sends a UTF-8 CSV instead, special characters are misread without any error
-  (`ß` becomes `ÃŸ`). The validation result is still correct, because it only depends on
+  (`ë` becomes `Ã«`). The validation result is still correct, because it only depends on
   references and amounts, but descriptions in the report would be garbled. In production
-  I would agree on the encoding with the client, or detect it, for example from a byte order mark.
+  I would agree on the encoding with the client.
 - **XML is mapped declaratively with Jackson.** The XML structure is described by small
   records that are internal to the parser; the rest of the application only sees `StatementRecord`.
 
@@ -124,7 +125,7 @@ model/        StatementRecord, the format-independent domain model
 - **Files are processed in memory.** All records are parsed into a list before validation.
   This is fine within the 10 MB upload limit; for much larger files I would stream the
   records and only keep the references in memory for the duplicate check.
-- **The CSV encoding is assumed**, not detected (see *CSV encoding* above).
+- **The CSV encoding is assumed**, not detected (see *File encoding* above).
 - **No authentication.** In production the endpoint would sit behind the bank's
   authentication and only be reachable by authorised clients.
 - **Processing is synchronous.** For large files or high volumes, an asynchronous flow
