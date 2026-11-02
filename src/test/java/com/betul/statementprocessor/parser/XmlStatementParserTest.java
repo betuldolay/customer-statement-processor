@@ -59,7 +59,8 @@ class XmlStatementParserTest {
                 """;
 
         assertThatThrownBy(() -> parser.parse(toStream(maliciousXml)))
-                .isInstanceOf(StatementParseException.class);
+                .isInstanceOf(StatementParseException.class)
+                .hasMessageContaining("Could not read XML file");
     }
 
     @Test
