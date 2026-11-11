@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.IntStream;
 
 @Component
 public class XmlStatementParser implements StatementParser {
@@ -31,23 +32,30 @@ public class XmlStatementParser implements StatementParser {
             if (document == null || document.records() == null) {
                 return List.of();
             }
-            return document.records().stream()
-                    .map(XmlStatementParser::toRecord)
+            List<XmlRecord> xmlRecords = document.records();
+            return IntStream.range(0, xmlRecords.size())
+                    .mapToObj(i -> toRecord(xmlRecords.get(i), i + 1))
                     .toList();
         } catch (JacksonException e) {
             throw new StatementParseException("Could not read XML file", e);
         }
     }
 
-    private static StatementRecord toRecord(XmlRecord xml) {
-        return new StatementRecord(
-                Long.parseLong(required(xml.reference(), "reference")),
-                required(xml.accountNumber(), "accountNumber"),
-                required(xml.description(), "description"),
-                new BigDecimal(required(xml.startBalance(), "startBalance")),
-                new BigDecimal(required(xml.mutation(), "mutation")),
-                new BigDecimal(required(xml.endBalance(), "endBalance"))
-        );
+    private static StatementRecord toRecord(XmlRecord xml, int recordNumber) {
+        try {
+            return new StatementRecord(
+                    Long.parseLong(required(xml.reference(), "reference")),
+                    required(xml.accountNumber(), "accountNumber"),
+                    required(xml.description(), "description"),
+                    new BigDecimal(required(xml.startBalance(), "startBalance")),
+                    new BigDecimal(required(xml.mutation(), "mutation")),
+                    new BigDecimal(required(xml.endBalance(), "endBalance"))
+            );
+        } catch (IllegalArgumentException e) {
+            // e.g. a non-numeric reference or balance
+            throw new StatementParseException(
+                    "Invalid data in record " + recordNumber + ": " + e.getMessage(), e);
+        }
     }
 
     private static String required(String value, String fieldName) {

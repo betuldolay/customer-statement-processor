@@ -151,6 +151,33 @@ class XmlStatementParserTest {
                 .hasMessageContaining("reference");
     }
 
+    @Test
+    void failsWithRecordNumberWhenBalanceIsNotANumber() {
+        String xml = """
+                <records>
+                  <record reference="1">
+                    <accountNumber>NL56RABO0149876948</accountNumber>
+                    <description>Flowers</description>
+                    <startBalance>10.00</startBalance>
+                    <mutation>+5.00</mutation>
+                    <endBalance>15.00</endBalance>
+                  </record>
+                  <record reference="2">
+                    <accountNumber>NL56RABO0149876948</accountNumber>
+                    <description>Candy</description>
+                    <startBalance>abc</startBalance>
+                    <mutation>+5.00</mutation>
+                    <endBalance>15.00</endBalance>
+                  </record>
+                </records>
+                """;
+
+        assertThatThrownBy(() -> parser.parse(toStream(xml)))
+                .isInstanceOf(StatementParseException.class)
+                .hasMessageContaining("Invalid data in record 2")
+                .hasCauseInstanceOf(NumberFormatException.class);
+    }
+
     private InputStream toStream(String xml) {
         return new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
     }

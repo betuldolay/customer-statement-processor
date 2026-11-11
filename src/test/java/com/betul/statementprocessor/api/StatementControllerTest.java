@@ -103,7 +103,7 @@ class StatementControllerTest {
 
         mockMvc.perform(multipart("/api/statements/validate").file(file))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("Invalid record data in 'invalid.xml'")));
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("Invalid data in record 1")));
     }
 
     @Test
@@ -114,7 +114,7 @@ class StatementControllerTest {
 
         mockMvc.perform(multipart("/api/statements/validate").file(file))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("Invalid record data in 'invalid.csv'")));
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("Invalid data in record 1")));
     }
 
     private MockMultipartFile sampleFile(String name) throws IOException {

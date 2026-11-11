@@ -101,19 +101,35 @@ class CsvStatementParserTest {
                 """;
 
         assertThatThrownBy(() -> parser.parse(toStream(csv)))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(StatementParseException.class)
+                .hasMessageContaining("record 1")
                 .hasMessageContaining("End Balance");
     }
 
     @Test
-    void failsWhenBalanceIsNotANumber() {
+    void failsWhenHeaderNameIsEmpty() {
         String csv = """
-                Reference,Account Number,Description,Start Balance,Mutation,End Balance
-                1,NL56RABO0149876948,Flowers,abc,+5.00,15.00
+                Reference,,Description,Start Balance,Mutation,End Balance
+                1,NL56RABO0149876948,Flowers,10.00,+5.00,15.00
                 """;
 
         assertThatThrownBy(() -> parser.parse(toStream(csv)))
-                .isInstanceOf(NumberFormatException.class);
+                .isInstanceOf(StatementParseException.class)
+                .hasMessageContaining("Invalid CSV header");
+    }
+
+    @Test
+    void failsWithRecordNumberWhenBalanceIsNotANumber() {
+        String csv = """
+                Reference,Account Number,Description,Start Balance,Mutation,End Balance
+                1,NL56RABO0149876948,Flowers,10.00,+5.00,15.00
+                2,NL56RABO0149876948,Candy,abc,+5.00,15.00
+                """;
+
+        assertThatThrownBy(() -> parser.parse(toStream(csv)))
+                .isInstanceOf(StatementParseException.class)
+                .hasMessageContaining("Invalid data in record 2")
+                .hasCauseInstanceOf(NumberFormatException.class);
     }
 
     private InputStream toStream(String csv) {

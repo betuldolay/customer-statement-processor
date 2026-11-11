@@ -40,17 +40,26 @@ public class CsvStatementParser implements StatementParser {
             return parser.stream().map(this::toRecord).toList();
         } catch (IOException | UncheckedIOException e) {
             throw new StatementParseException("Could not read CSV file", e);
+        } catch (IllegalArgumentException e) {
+            // e.g. an empty or invalid header line
+            throw new StatementParseException("Invalid CSV header: " + e.getMessage(), e);
         }
     }
 
     private StatementRecord toRecord(CSVRecord row) {
-        return new StatementRecord(
-                Long.parseLong(row.get("Reference")),
-                row.get("Account Number"),
-                row.get("Description"),
-                new BigDecimal(row.get("Start Balance")),
-                new BigDecimal(row.get("Mutation")),
-                new BigDecimal(row.get("End Balance"))
-        );
+        try {
+            return new StatementRecord(
+                    Long.parseLong(row.get("Reference")),
+                    row.get("Account Number"),
+                    row.get("Description"),
+                    new BigDecimal(row.get("Start Balance")),
+                    new BigDecimal(row.get("Mutation")),
+                    new BigDecimal(row.get("End Balance"))
+            );
+        } catch (IllegalArgumentException e) {
+            // e.g. a non-numeric balance or a missing column
+            throw new StatementParseException(
+                    "Invalid data in record " + row.getRecordNumber() + ": " + e.getMessage(), e);
+        }
     }
 }
